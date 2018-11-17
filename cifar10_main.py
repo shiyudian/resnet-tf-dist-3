@@ -280,17 +280,20 @@ def run_cifar(flags_obj):
 
       input_function = (flags_obj.use_synthetic_data and get_synth_input_fn(flags_core.get_tf_dtype(flags_obj)) or input_fn)
 
-      print("\n add training features similar to resnet_run_loop.resnet_main and add tf.Variables (global variable) between machines ")
-      print("\n do supervisor just like in mnist")
-
-##  resnet_run_loop.resnet_main(
-##      flags_obj, cifar10_model_fn, input_function, DATASET_NAME,
-##      shape=[_HEIGHT, _WIDTH, _NUM_CHANNELS])
+      # run training
+      resnet_run_loop.resnet_main(flags_obj, cifar10_model_fn, input_function, DATASET_NAME,shape=[_HEIGHT, _WIDTH, _NUM_CHANNELS])
 
 def main(_):
+   # create options to profile time/memory as well as parameters
+
+  builder = tf.profiler.ProfileOptionBuilder
+  opts = builder(builder.time_and_memory()).order_by('micros').build()
+  opts2 = tf.profiler.ProfileOptionBuilder.trainable_variables_parameter()
+
   with logger.benchmark_context(flags.FLAGS):
-    print("\n run_cifar")
-    run_cifar(flags.FLAGS)
+    with tf.contrib.tfprof.ProfileContext('./') as pctx:
+      print("\n run_cifar")
+      run_cifar(flags.FLAGS)
 
 
 if __name__ == '__main__':
